@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Raw Contract</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+:root{
+--bg-start:#f1f3f6;
+--bg-end:#cdd2d9;
+--fg:#1d232c;
+--panel-bg:rgba(255,255,255,0.76);
+}
+
+body.dark{
+--bg-start:#16191f;
+--bg-end:#2a2f37;
+--fg:#f3f5f8;
+--panel-bg:rgba(24,28,34,0.9);
+}
+
+body{
+margin:0;
+min-height:100vh;
+background:linear-gradient(180deg,var(--bg-start),var(--bg-end));
+color:var(--fg);
+font-family:Consolas,Monaco,"Courier New",monospace;
+}
+
+.code-frame{
+margin:20px;
+border-radius:18px;
+background:var(--panel-bg);
+padding:20px;
+box-shadow:0 20px 40px rgba(0,0,0,0.2);
+}
+
+.toolbar{
+position:fixed;
+top:15px;
+right:20px;
+display:flex;
+gap:10px;
+}
+
+button{
+padding:10px 14px;
+border-radius:6px;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+.content{
+white-space:pre-wrap;
+font-size:14px;
+line-height:1.45;
+overflow:auto;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="toolbar">
+
+<button id="copy-btn">Copy</button>
+
+<button id="theme-btn">🌙</button>
+
+</div>
+
+<div class="code-frame">
+
+<pre id="raw-content" class="content">Loading...</pre>
+
+</div>
+
+<script>
+
+const contentElement=document.getElementById("raw-content");
+const copyButton=document.getElementById("copy-btn");
+const themeButton=document.getElementById("theme-btn");
+
+let loadedText="";
+
+const THEME_STORAGE_KEY="raw_theme";
+
+function setTheme(mode){
+
+const isDark=mode==="dark";
+
+document.body.classList.toggle("dark",isDark);
+
+themeButton.textContent=isDark?"☀️":"🌙";
+
+localStorage.setItem(THEME_STORAGE_KEY,isDark?"dark":"light");
+
+}
+
+function toggleTheme(){
+
+const isDark=document.body.classList.contains("dark");
+
+setTheme(isDark?"light":"dark");
+
+}
+
+async function loadTextFile(){
+
+const params=new URLSearchParams(window.location.search);
+
+const id=params.get("id") || "example";
+
+try{
+
+const response=await fetch("../pastes/"+id+".txt",{cache:"no-store"});
+
+if(!response.ok){
+
+throw new Error("File not found");
+
+}
+
+loadedText=await response.text();
+
+contentElement.textContent=loadedText;
+
+}catch(error){
+
+contentElement.textContent="Contract not found";
+
+}
+
+}
+
+async function copyLoadedText(){
+
+try{
+
+await navigator.clipboard.writeText(loadedText);
+
+copyButton.textContent="Copied ✅";
+
+setTimeout(()=>{
+
+copyButton.textContent="Copy";
+
+},1500);
+
+}catch(e){
+
+copyButton.textContent="Error";
+
+}
+
+}
+
+const savedTheme=localStorage.getItem(THEME_STORAGE_KEY);
+
+setTheme(savedTheme==="light"?"light":"dark");
+
+themeButton.addEventListener("click",toggleTheme);
+
+copyButton.addEventListener("click",copyLoadedText);
+
+loadTextFile();
+
+</script>
+
+</body>
+</html>
